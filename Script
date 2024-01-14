@@ -1,0 +1,475 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df = pd.read_csv(r"C:\Users\DELL\Downloads\Practice Dataset\1\retail_sales_dataset.csv")
+df
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df.isnull().sum()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df.duplicated().sum()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df.columns
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df.info()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df['Date'] = pd.to_datetime(df['Date'])
+df.info()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q1) What is the average age of customers in the dataset?
+
+avg_age = df['Age'].mean()
+avg_age
+
+print(f"The Average Age of Customers in the dataset is {int(avg_age)} yrs .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+print("Top 5 Customers with most highest repeated Age")
+print()
+print(df['Age'].value_counts()[:5].reset_index().rename(columns={'Age':"Age (yrs)",'count':'Customers Count'}))
+
+print('-'*140)
+
+print("Top 5 Customers with most lowest repeated Age")
+print()
+print(df['Age'].value_counts()[-5:].reset_index().rename(columns={'Age':"Age (yrs)",'count':'Customers Count'}))
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df['Age'].describe()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q2) How many unique product categories are there?
+
+df['Product Category'].nunique()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+df['Product Category'].unique()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q3) Which product category has the highest total revenue?
+
+  # Method 1
+# df.groupby('Product Category')['Total Amount'].sum().sort_values(ascending=False)[:1]
+
+ # Method 2
+# df.groupby('Product Category')['Total Amount'].sum().nlargest(1)
+
+ # Method 3
+# df.groupby('Product Category').agg(Total_Revenue=('Total Amount','sum')).nlargest(1,'Total_Revenue')
+
+d2 = df.groupby('Product Category')['Total Amount'].sum().sort_values(ascending=False).reset_index()
+d2
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+print("Graph for above Table")
+sns.barplot(data = df, x = 'Product Category' , y = 'Total Amount',errorbar=None,width=0.5,estimator=np.sum)
+plt.title("Revenue generated by each Product Category")
+plt.ylabel('Revenue')
+for i,j in zip(d2['Product Category'],d2['Total Amount']):
+    plt.text(i,j,j)
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+plt.figure(figsize=(10,4))
+sns.barplot(data = df, x = 'Product Category' , y = 'Total Amount' , hue='Gender',errorbar=None, estimator=np.sum)
+plt.title("Spends by Genders for all Product Categories")
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Q4) What is the average quantity of products purchased per transaction?
+
+  # Method 1
+
+print(f"Average Quantity of products purchased per transaction {int(df['Quantity'].mean())} units.")
+
+  # Method 2
+
+print(f"Average Quantity of products purchased per transaction {int(df.groupby('Transaction ID')['Quantity'].mean().mean())} units.")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q5) Calculate the total revenue generated from all transactions?
+
+df['Total Amount'].sum()
+
+print("Total Revenue generated from all transactions is Rupees",df['Total Amount'].sum())
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q6) Determine the product category with the highest average price per unit ?
+
+  # Method 1
+df.groupby('Product Category')['Price per Unit'].mean().nlargest(1)
+
+  # Method 2
+df.groupby('Product Category')['Price per Unit'].mean().idxmax()
+
+print("Product Category with the highest average price per unit is ",df.groupby('Product Category')['Price per Unit'].mean().idxmax())
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q7) Who is the youngest customer, and what products did they purchase?
+
+min_age = df['Age'].min()
+
+print(f"Youngest customer in the dataset is {min_age} yrs old")
+
+catg_youngest = df.loc[df['Age']==min_age]['Product Category'].value_counts().idxmax()
+catg_youngest
+
+print(f"Most sought Product Category by Yougest customers was {catg_youngest}")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+print("Purchase Trend of Youngest Customers ")
+print()
+d1 = df.loc[df['Age']==min_age].groupby('Product Category').agg(
+    Product_Category_Count = ('Product Category','count') ,
+    Total_Quantity_Purchased = ('Quantity','sum') ,
+    Revenue_Generated = ('Total Amount','sum') )  
+
+d1
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+youngster_data = df.loc[df['Age'] == df['Age'].min()]
+youngster_data 
+
+
+sns.countplot(data = youngster_data , x = 'Product Category' , stat = 'count' , width = 0.5)
+plt.yticks(ticks=np.arange(0,11))
+plt.show()
+
+sns.barplot(data = youngster_data, x = 'Product Category' , y = 'Quantity' , estimator = np.sum , errorbar = None ,  width = 0.5 )
+plt.yticks(ticks=np.arange(0,25,4))
+plt.show() 
+
+sns.barplot(data = youngster_data, x = 'Product Category' , y = 'Total Amount' , estimator = np.sum , errorbar = None ,  width = 0.5)
+plt.yticks(ticks=np.arange(0,5600,500))
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q8) What is the total quantity of products sold in the "Clothing" category?
+
+quan_clothing = df.loc[df['Product Category']=='Clothing']['Quantity'].sum()
+
+print(f"Total Quantity of Products sold in the Clothing category is {quan_clothing} units")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q9) Calculate the average total amount spent per transaction ?
+
+avg_per_trans = df['Total Amount'].mean()
+
+print(f"Average Total Amount spent per transaction is Rupees {int(avg_per_trans)} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q10) Find five customer with the highest total spending.
+
+cust_top5 = list( df.groupby('Customer ID')['Total Amount'].sum().nlargest(5).index )
+
+print(f"Five Customer ID's with the highest total spending are :")
+for i in cust_top5:
+    print(i,end=" ")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q11) Analyze the gender distribution of customers in the dataset.
+
+female = (df['Gender'].value_counts(normalize=True)*100).loc['Female']
+
+male = (df['Gender'].value_counts(normalize=True)*100).loc['Male']
+
+print(f"In the dataset, Males are {int(male)}% and Females are {int(female)}% .")
+print()
+plt.pie(data=df, x = list(df['Gender'].value_counts()) , labels = ( df['Gender'].value_counts().index ) , autopct="%.f%%"  ,startangle = 90)
+plt.title("Distribution of Gender in the Dataset")
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+print("Total Count for both Males and Females in the Dataset is ")
+df['Gender'].value_counts()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q 12) Calculate the total quantity of products sold in the "Electronics" category.
+
+elec_quan = df.loc[df['Product Category']=='Electronics']['Quantity'].sum()
+
+print(f"Total Quantity of products sold in the Electronics category is {elec_quan} units .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q13) Determine the most common product category in the dataset.
+
+most_common_pc = df['Product Category'].value_counts().idxmax()
+
+print(f"Most Common product category in the dataset is {most_common_pc}")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q14) Identify five customer with the highest total quantity of products purchased.
+
+top5_quan = list(df.groupby('Customer ID')['Quantity'].sum().nlargest(5).index)
+
+print("Five Customer with the highest total quantity of products purchased are : ")
+for i in top5_quan:
+    print(i,end=" ")
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q15) Calculate the total revenue generated from transactions involving male customers ?
+
+  # Method 1
+
+male_tamt = df.loc[df['Gender']=='Male']['Total Amount'].sum()
+
+print(f"Total Revenue generated from transactions involving male customers is Rupees {male_tamt} .")
+
+print()
+
+print("Revenue Generated by Male and Female")
+plt.bar(data = df , x='Gender', height ='Total Amount' , width = 0.3)
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   # Method 2
+
+male_tamt = ( df.groupby('Gender')['Total Amount'].sum() ).loc['Male']
+
+print(f"Total Revenue generated from transactions involving male customers is Rupees {male_tamt} .")
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q16)  Analyze the distribution of transaction dates ?
+
+start_date = (df['Date'].dt.date).min()
+end_date = (df['Date'].dt.date).max()
+
+print(f"Dates in the Dataset starts from {start_date} and ends at {end_date} .")
+
+print()
+
+top10_trans_dates = df['Date'].value_counts().index[:10]
+top10_trans_dates
+
+print("Dates recorded highest number of transactions are : ")
+for i in top10_trans_dates:
+    print(str(i).split()[0] , end = "       ")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q17) Determine the product category with the lowest average price per unit ?
+
+pc_lowest_avg_price = df.groupby('Product Category')['Price per Unit'].mean().idxmin()
+
+print("Product Category with the lowest average price per unit is ",pc_lowest_avg_price)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q18) Identify customers who made transactions with a total amount greater than 1,000 ?
+
+cust_trans = df.groupby('Customer ID')['Total Amount'].sum().reset_index()
+
+print("All Customers who made transactions with a total amount greater than 1,000")
+cust_trans.loc[cust_trans['Total Amount']>1000]['Customer ID']
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q19) Calculate the total revenue generated in each month ?
+
+month_rev = df.groupby([df['Date'].dt.month , df['Date'].dt.month_name()]).agg( Total_Revenue = ('Total Amount','sum') )
+month_rev
+
+month_rev.index = month_rev.index.set_names(['Month Number', 'Month Name'])
+month_rev = month_rev.reset_index()
+month_rev
+
+plt.figure(figsize=(15,5))
+plt.bar( data = month_rev , x = 'Month Name' , height = 'Total_Revenue')      
+plt.title("Revenue generated in each Month for the Year 2023")
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q20) How many unique customer IDs are there in the dataset?
+
+unique_cust_ids = df['Customer ID'].nunique()
+
+print(f"Total Unique Customer IDs are there in the dataset is {unique_cust_ids} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q21) Calculate the average total amount spent per customer ?
+
+  # Method 1
+avg_per_cust = df['Total Amount'].sum() / df['Total Amount'].count()
+
+  # Method 2
+avg_per_cust = df['Total Amount'].mean()
+
+print(f"Average Total Amount spent by each customer is Rupees {avg_per_cust} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q22) What is the most common age among customers?
+
+most_comm_age = list(df['Age'].mode())
+most_comm_age
+
+print(f"Most Common age among customers are {most_comm_age[0]} and {most_comm_age[1]} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q23) Calculate the average quantity of products sold per category ?
+
+print( df.groupby('Product Category').agg(Avg_Quantity_Sold_Per_Category=('Quantity','mean'))   )
+print()
+print("Average Quantity of products sold per category is 2 units .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q 24) Identify the product category with the lowest total revenue ?
+
+print(f"Product Category with the lowest Total Revenue is {df.groupby('Product Category')['Total Amount'].sum().idxmin()} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q25) Determine the product category with the highest total quantity sold ?
+
+print(f"Product Category with the highest total quantity sold is {df.groupby('Product Category')['Quantity'].sum().idxmax()} .")
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q 26) Find the most expensive product in each category ?
+
+df.groupby('Product Category')['Price per Unit'].max()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q 27) Calculate the total revenue generated from transactions in 2023 ?
+
+tot_rev_2023 = df['Total Amount'].sum()
+
+print(f"Total Revenue generated from transactions in Year 2023 is Rupees {tot_rev_2023} .")
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Q 28) Analyze the distribution of the total amount by day of the week ?
+
+df.groupby(df['Date'].dt.day_name())['Total Amount'].sum()
+
+sns.relplot(data = df , x = df['Date'].dt.dayofweek , y = 'Total Amount' , kind='line' , errorbar = None , height = 3 , aspect = 3 , estimator = np.sum)
+plt.xticks(np.arange(0,7),['Mon','Tue','Wed','Thrus','Fri','Sat','Sun'])
+plt.xlabel('Day Name')
+plt.show()
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
